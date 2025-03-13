@@ -1,0 +1,91 @@
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+void maketokens(char *s, char *tok[])
+
+{
+	int i = 0;
+	char *p;
+	p = strtok(s, " ");
+	while (p != NULL)
+	{
+		tok[i++] = p;
+		p = strtok(NULL, " ");
+	}
+	tok[i] = NULL;
+}
+void typeline(char mode, int n, const char *filename) 
+{
+    FILE *fp = fopen(filename, "r");
+    if (!fp)
+     {
+        printf("File  not found.\n" );
+        return;
+     }
+
+    char lines[1024][1024];
+    int line_count = 0;
+
+    while (fgets(lines[line_count], sizeof(lines[line_count]), fp))
+     {
+        line_count++;
+    }
+
+    if (mode == 'a')
+     {
+        for (int i = 0; i < line_count; i++) 
+        {
+            printf("%s", lines[i]);
+        }
+    } 
+    else if (mode == 'n')
+     {
+        for (int i = 0; i < n && i < line_count; i++) 
+        {
+            printf("%s", lines[i]);
+        }
+    } 
+    else if (mode == '-') 
+    {
+        for (int i = (line_count - n < 0 ? 0 : line_count - n); i < line_count; i++)
+         {
+            printf("%s", lines[i]);
+         }
+    }
+    fclose(fp);
+}
+int main()
+{
+	char buff[80], *args[10];
+	int pid;
+	while (1)
+	{
+		printf("myshell$");
+		fflush(stdin);
+		fgets(buff, 80, stdin);
+		buff[strlen(buff) - 1] = '\0';
+
+		maketokens(buff, args);
+
+		if (strcmp(args[0], "count") == 0)
+			count(args[2], args[1][0]);
+
+		else
+		{
+			pid = fork();
+			if (pid > 0)
+				wait(NULL);
+			else
+			{
+				if (execvp(args[0], args) == -1)
+					printf("Bad command.\n");
+			}
+		}
+	}
+	return 0;
+}
